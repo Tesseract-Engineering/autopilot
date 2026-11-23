@@ -1,0 +1,18 @@
+# autopilot backstop: deterministic gate for every PR, whatever harness wrote it.
+# Installed by `autopilot install-git --ci`. Runs .autopilot/repo-gate.sh.
+name: autopilot-gate
+on:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      # Add your toolchain setup here (e.g. actions/setup-python + pip install), so
+      # that .claude/checks.sh can run.
+      - name: repo gate
+        run: .autopilot/repo-gate.sh "origin/${{ github.base_ref }}"

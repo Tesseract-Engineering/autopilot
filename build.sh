@@ -20,6 +20,8 @@ generate() { # $1 = output dir
   cp -R "$ROOT/core/scripts/." "$out/scripts/"
   cp -R "$ROOT/adapters/claude/shims/." "$out/scripts/claude/"
   cp -R "$ROOT/core/skills/." "$out/skills/"
+  mkdir -p "$out/git" && cp "$ROOT/adapters/git/pre-push" "$ROOT/adapters/git/autopilot-gate.yml" "$out/git/"
+  mkdir -p "$out/bin" && cp -R "$ROOT/core/bin/." "$out/bin/" && chmod +x "$out"/bin/*
 
   # Agents = Claude frontmatter (adapter) + role prompt (core, metadata stripped).
   local role name
