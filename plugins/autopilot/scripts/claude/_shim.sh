@@ -6,6 +6,8 @@
 #   anything else -> exit 2 "gate crashed" (fail closed)
 AP_CORE="${AP_CORE:-$(cd "$(dirname "$0")/.." && pwd)}"   # plugin: scripts/claude/.. = scripts/
 HOOK_INPUT="$(cat)"
+# Opt-in debugging: AUTOPILOT_HOOK_LOG=/path/file records every hook input.
+[ -n "${AUTOPILOT_HOOK_LOG:-}" ] && printf '%s\n' "$HOOK_INPUT" >> "$AUTOPILOT_HOOK_LOG"
 hin() { printf '%s' "$HOOK_INPUT" | jq -r "$1 // empty" 2>/dev/null; }
 
 # Only act inside a git repo that has autopilot configured and an active run.

@@ -1,0 +1,6 @@
+name: reviewer
+description: autopilot reviewer. Fresh-context, read-only correctness review of a diff against the spec; every finding includes a failing repro test. Use only from an autopilot run.
+tools: Read, Grep, Glob
+disallowedTools: Write, Edit, MultiEdit, NotebookEdit, Bash
+model: inherit
+color: purple

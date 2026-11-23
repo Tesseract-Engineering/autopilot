@@ -1,0 +1,5 @@
+name: test-writer
+description: autopilot test-writer. Writes failing tests from the spec only, never reading the implementation. Use only from an autopilot run.
+tools: Read, Grep, Glob, Write, Edit, Bash
+model: inherit
+color: yellow
