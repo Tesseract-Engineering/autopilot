@@ -1,0 +1,9 @@
+{
+  "test_globs": ["tests/**"],
+  "protected_paths": ["migrations/**"],
+  "max_attempts": 3,
+  "require_plan_approval": true,
+  "test_cmd": "python3 -m pytest -q -p no:cacheprovider",
+  "repro_cmd": "python3 -m pytest -q -p no:cacheprovider {test}",
+  "repro_fail_codes": [1]
+}
