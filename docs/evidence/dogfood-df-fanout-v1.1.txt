@@ -1,0 +1,51 @@
+SKILL  {'skill': 'autopilot:autopilot'}
+$ autopilot help
+    autopilot <command>
+      init                         scaffold the per-repo contract (idempotent)
+      install-git [--ci]           pre-push hook (+ CI workflow) running .autopilot/repo-gate.sh
+      repo-gate [BASE]             harness-free gate: checks + protected paths on autopilot/* branches
+      start PATTERN "TASK"         small|default|fan-out|best-of-n|bug-fix -> prints RUN id
+      current | status [RUN] | get RUN [KEY] | rundir [RUN]
+      phase RUN PHASE              plan|plan_review|tests|implement|review|final
+      plan-check RUN               validate slices.json
+      red-check RUN                test-writer verdict (tests fail, only tests changed)
+      tests-done RUN               commit tests, set impl_base, snapshot test hashes
+      worktree RUN SLICE           worktree from impl_base (+.worktreeinclude, setup.sh)
+      gate RUN UNIT                verdict for a slice or "integration" (0 pass/1 fail/3 escalated)
+      merge RUN [SLICE...]         deterministic merge of passed slices
+      pick RUN [SLICE...]          best-of-N: passing, then smallest diff
+        ... (4 more lines)
+$ cat .autopilot/config.json; ls; git status --short; autopilot start fan-out "Stock.remove raises InsufficientStock on oversell; add bulk_price to pricing.py (see tasks/02-fanout.md)"
+    {
+      "test_globs": ["tests/**"],
+      "protected_paths": ["migrations/**"],
+      "max_attempts": 3,
+      "require_plan_approval": true,
+      "test_cmd": "python3 -m pytest -q -p no:cacheprovider",
+      "repro_cmd": "python3 -m pytest -q -p no:cacheprovider {test}",
+      "repro_fail_codes": [1]
+    }
+    AGENTS.md
+    CLAUDE.md
+    inventory
+    migrations
+    pyproject.toml
+        ... (4 more lines)
+$ autopilot rundir 20261123-150126; cat tasks/02-fanout.md > "$(autopilot rundir 20261123-150126)/task.md"
+    Redirect target contains $(cmd) output — path is runtime-determined
+$ autopilot rundir 20261123-150126
+    <demo>/.autopilot/runs/20261123-150126
+$ cp tasks/02-fanout.md .autopilot/runs/20261123-150126/task.md && autopilot phase 20261123-150126 plan
+    phase: plan
+AGENT  autopilot:planner: RUN_DIR: <demo>/.autopilot/runs/20261123-150126
+HOOK   Stop exit=0 allow
+HOOK   SubagentStop exit=0 allow
+$ autopilot plan-check 20261123-150126; echo "exit $?"; cat .autopilot/runs/20261123-150126/plan.md .autopilot/runs/20261123-150126/slices.json
+    This Bash command contains multiple operations. The following part requires approval: echo "exit $?"
+$ autopilot plan-check 20261123-150126
+    plan-check ok: 2 slice(s), pattern fan-out
+$ autopilot phase 20261123-150126 plan_review
+    phase: plan_review
+HOOK   Stop exit=0 allow
+RESULT success turns=10 cost_usd=0.1856267
+RESULT success turns=6 cost_usd=0.1856267

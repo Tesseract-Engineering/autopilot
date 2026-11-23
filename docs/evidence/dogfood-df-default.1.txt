@@ -1,0 +1,61 @@
+SKILL  {'skill': 'autopilot:autopilot'}
+$ autopilot help; cat tasks/01-default.md
+    autopilot <command>
+      init                         scaffold the per-repo contract (idempotent)
+      install-git [--ci]           pre-push hook (+ CI workflow) running .autopilot/repo-gate.sh
+      repo-gate [BASE]             harness-free gate: checks + protected paths on autopilot/* branches
+      start PATTERN "TASK"         small|default|fan-out|best-of-n|bug-fix -> prints RUN id
+      current | status [RUN] | get RUN [KEY] | rundir [RUN]
+      phase RUN PHASE              plan|plan_review|tests|implement|review|final
+      plan-check RUN               validate slices.json
+      red-check RUN                test-writer verdict (tests fail, only tests changed)
+      tests-done RUN               commit tests, set impl_base, snapshot test hashes
+      worktree RUN SLICE           worktree from impl_base (+.worktreeinclude, setup.sh)
+      gate RUN UNIT                verdict for a slice or "integration" (0 pass/1 fail/3 escalated)
+      merge RUN [SLICE...]         deterministic merge of passed slices
+      pick RUN [SLICE...]          best-of-N: passing, then smallest diff
+        ... (12 more lines)
+$ autopilot start default "validate discounts in apply_discount"; ls; cat .autopilot/config.json; grep -rn "apply_discount" --include=*.py . | head
+    20261123-150124
+    AGENTS.md
+    CLAUDE.md
+    inventory
+    migrations
+    pyproject.toml
+    README.md
+    tasks
+    tests
+    {
+      "test_globs": ["tests/**"],
+      "protected_paths": ["migrations/**"],
+      "max_attempts": 3,
+      "require_plan_approval": true,
+        ... (5 more lines)
+$ RUN=20261123-150124; autopilot phase $RUN plan; autopilot rundir $RUN; grep -rn "apply_discount" . --include=*.py | head
+    A variable set in this command can't be checked before it runs
+$ autopilot phase 20261123-150124 plan; autopilot rundir 20261123-150124; grep -rn "apply_discount" . --include=*.py | head
+    phase: plan
+    <demo>/.autopilot/runs/20261123-150124
+    (eval):1: no matches found: --include=*.py
+AGENT  autopilot:planner: RUN_DIR: <demo>/.autopilot/runs/20261123-150124
+HOOK   Stop exit=0 allow
+HOOK   SubagentStop exit=0 allow
+$ autopilot plan-check 20261123-150124 && autopilot phase 20261123-150124 plan_review; cd .autopilot/runs/20261123-150124 && cat plan.md slices.json
+    plan-check ok: 1 slice(s), pattern default
+    phase: plan_review
+    ## Goal
+    Make `inventory.pricing.apply_discount` validate its inputs and round its result to 2 decimals, leaving valid-input behavior otherwise unchanged.
+    
+    ## Spec
+    Signature: `apply_discount(total, pct)` in `inventory/pricing.py`. It returns `total * (1 - pct / 100)` rounded to 2 decimal places, as with `round(value, 2)`.
+    
+    Errors:
+    - `pct < 0` or `pct > 100` raises `ValueError`. 0 and 100 are valid.
+    - `total < 0` raises `ValueError`. `total == 0` is valid.
+    - Validation happens before any computation.
+    
+    Examples:
+        ... (20 more lines)
+HOOK   Stop exit=0 allow
+RESULT success turns=8 cost_usd=0.15631130000000001
+RESULT success turns=2 cost_usd=0.15631130000000001

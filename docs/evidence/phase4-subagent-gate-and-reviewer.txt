@@ -56,7 +56,7 @@ FINAL success turns= 3 **Step 1: implementer replied:**
 
 > The gate failed again (attempt 2/3) with the same evidence, and nothing has changed since my last reply. I'm not making further edits.
 >
-> - **Current state:** `apply_discount` in `/private/tmp/claude-501/-Users-kar-Desktop-autopilot/7b8dc5da-54d2-49f6-a820-d0e324
+> - **Current state:** `apply_discount` in `<scratch>
 
 ## Reviewer's own reply (subagent transcript)
 **Step 2: reviewer replied:**

@@ -26,7 +26,7 @@ ASSISTANT: DONE
 HOOK hook_started {"hook_id": "6a27a643-7585-4940-acbd-4d0d9c6c845b", "hook_name": "Stop", "hook_event": "Stop"}
 HOOK hook_response {"hook_id": "6a27a643-7585-4940-acbd-4d0d9c6c845b", "hook_name": "Stop", "hook_event": "Stop", "output": "UNIT: 20261123-145039/integration  ATTEMPT: 1/3\nVERDICT: FAIL (checks)\nREASON: repo checks failed\nEVIDENCE: $ .claude/checks.sh\n  .F..                                                                     [100%]\n  =================================== FAILURES ===================================\n  _____________________________ test_apply_discount ______________________________\n  \n      def test_apply_discount():\n  >       assert apply_discount(200, 10) == 180\n  E       assert 200 == 180\n  E        +  where 200 = apply_discount(200, 10)\n  \n  tests/test_pricing.py:9: AssertionError\n  =========================== short test summary info ============================\n  FAILED tests/test_pricing.py::test_apply_discount - assert 200 == 180\n  1 failed, 3 passed in 0.01s\nSCOPE: fix only: inventory/pricing.py\nLOG: <scratch>/proof-a/.autopilot/runs/20261123-145039/slices/integration/gate-1.log\n", "stdout": "", "stderr": "UNIT: 20261123-145039/integration  ATTEMPT: 1/3\nVERDICT: FAIL (c
 USER-TEXT: Stop hook feedback:
-["/Users/kar/Desktop/autopilot/plugins/autopilot"/scripts/claude/stop.sh]: UNIT: 20261123-145039/integration  ATTEMPT: 1/3
+["<repo>/plugins/autopilot"/scripts/claude/stop.sh]: UNIT: 20261123-145039/integration  ATTEMPT: 1/3
 VERDICT: FAIL (checks)
 REASON: repo checks failed
 EVIDENCE: $ .claude/checks.sh
@@ -49,7 +49,7 @@ To get the gate passing, I can do one of two things:
 HOOK hook_started {"hook_id": "06ae3aff-407a-4720-8206-5eae11d3b263", "hook_name": "Stop", "hook_event": "Stop"}
 HOOK hook_response {"hook_id": "06ae3aff-407a-4720-8206-5eae11d3b263", "hook_name": "Stop", "hook_event": "Stop", "output": "UNIT: 20261123-145039/integration  ATTEMPT: 2/3\nVERDICT: FAIL (checks)\nREASON: repo checks failed\nEVIDENCE: $ .claude/checks.sh\n  .F..                                                                     [100%]\n  =================================== FAILURES ===================================\n  _____________________________ test_apply_discount ______________________________\n  \n      def test_apply_discount():\n  >       assert apply_discount(200, 10) == 180\n  E       assert 200 == 180\n  E        +  where 200 = apply_discount(200, 10)\n  \n  tests/test_pricing.py:9: AssertionError\n  =========================== short test summary info ============================\n  FAILED tests/test_pricing.py::test_apply_discount - assert 200 == 180\n  1 failed, 3 passed in 0.01s\nSCOPE: fix only: inventory/pricing.py\nLOG: <scratch>/proof-a/.autopilot/runs/20261123-145039/slices/integration/gate-2.log\n", "stdout": "", "stderr": "UNIT: 20261123-145039/integration  ATTEMPT: 2/3\nVERDICT: FAIL (c
 USER-TEXT: Stop hook feedback:
-["/Users/kar/Desktop/autopilot/plugins/autopilot"/scripts/claude/stop.sh]: UNIT: 20261123-145039/integration  ATTEMPT: 2/3
+["<repo>/plugins/autopilot"/scripts/claude/stop.sh]: UNIT: 20261123-145039/integration  ATTEMPT: 2/3
 VERDICT: FAIL (checks)
 REASON: repo checks failed
 EVIDENCE: $ .claude/checks.sh
