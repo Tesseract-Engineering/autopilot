@@ -9,7 +9,7 @@ OUT="$ROOT/plugins/autopilot"
 
 generate() { # $1 = output dir
   local out="$1"
-  rm -rf "$out"
+  rm -rf "${out:?}"
   mkdir -p "$out/.claude-plugin" "$out/hooks" "$out/scripts/claude" "$out/agents" "$out/skills"
 
   cp "$ROOT/adapters/claude/plugin.json" "$out/.claude-plugin/plugin.json"
