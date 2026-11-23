@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 # gate.sh RUN UNIT [TREE]
 # The verdict for one unit of work (a slice, or "integration"). In order:
-#   escalated already? -> tests unchanged -> scope -> slice check -> repo checks
+#   escalated already? -> tests unchanged -> scope -> checks
+# checks: a slice with a `check` command runs only that (other slices' new tests
+# may legitimately stay red until they are merged); a slice without one, and the
+# "integration" unit, run the full .claude/checks.sh.
 # Exit 0 = pass, 1 = fail (block; message on stderr), 3 = escalated (stop and hand to a human).
 set -uo pipefail
 . "$(dirname "$0")/lib/common.sh"
@@ -46,8 +49,11 @@ out="$("$S/scope-check.sh" "$run" "$unit" "$tree" 2>&1)" \
   || fail scope "changed files outside this unit's scope" "scope-check.sh $run $unit" "$out"
 
 check="$(jq -r --arg s "$unit" '.slices[]? | select(.id==$s) | .check // empty' "$(run_dir "$run")/slices.json" 2>/dev/null)"
-if [ -n "$check" ]; then
+if [ "$unit" != integration ] && [ -n "$check" ]; then
   out="$(cd "$tree" && bash -c "$check" 2>&1)" || fail check "slice check failed" "$check" "$out"
+  "$S/attempts.sh" pass "$run" "$unit"
+  echo "PASS: $run/$unit (slice check; full checks run at the integration gate)"
+  exit 0
 fi
 
 [ -x "$tree/.claude/checks.sh" ] || fail checks "missing or non-executable .claude/checks.sh (run /autopilot:init)" ".claude/checks.sh" ""

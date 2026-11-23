@@ -2,6 +2,7 @@
 # plan-check.sh RUN: validate slices.json.
 #   - parses; .slices non-empty; ids unique and [a-z0-9-]+ (not "tests"/"integration")
 #   - every slice has non-empty allowed_files and a goal
+#   - with more than one slice, every slice has a `check` command
 #   - no allowed file is a test path or a protected path
 #   - pattern fan-out / best-of-n: allowed_files are literal paths (no globs);
 #     fan-out slices are pairwise file-disjoint
@@ -24,6 +25,11 @@ while IFS= read -r msg; do [ -n "$msg" ] && err "$msg"; done < <(jq -r '
   (if .id=="tests" or .id=="integration" then "slice id \(.id) is reserved" else empty end),
   (if (.goal // "")=="" then "slice \(.id): missing goal" else empty end),
   (if ((.allowed_files // [])|length)==0 then "slice \(.id): allowed_files is empty" else empty end)' "$f")
+
+if [ "$(jq '.slices | length' "$f" 2>/dev/null || echo 0)" -gt 1 ]; then
+  while IFS= read -r msg; do [ -n "$msg" ] && err "$msg"; done < <(jq -r '.slices[] | select((.check // "")=="") |
+    "slice \(.id): needs a check command (with several slices, each slice is gated by its own check; full checks run at integration)"' "$f")
+fi
 
 dups="$(jq -r '.slices[]?.id' "$f" | sort | uniq -d)"
 [ -z "$dups" ] || err "duplicate slice ids: $dups"

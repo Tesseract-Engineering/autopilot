@@ -99,7 +99,10 @@ The run directory is your memory.
 ### fan-out
 Like default, with these changes:
 - Step 1: the planner is told PATTERN=fan-out. `plan-check` rejects overlapping or
-  globbed files. If it can't produce disjoint slices, **fall back to default**.
+  globbed files, and slices without a `check`. If it can't produce disjoint slices,
+  **fall back to default**.
+- Each slice is gated by **its own `check`** (the other slices' new tests are still red
+  in its worktree). The full `.claude/checks.sh` runs at the integration gate.
 - Step 4: for each slice, `autopilot worktree RUN <slice>` prints its WORKDIR (created
   from the committed tests, with `.worktreeinclude` files and `.autopilot/setup.sh`
   applied). Start **all** implementers in parallel (one message, several agent calls),

@@ -31,6 +31,13 @@ rm -f tests/test_add.sh.tmp; git checkout -q src/math.sh
 # slice check runs before repo checks
 new_repo; start_run default '{"slices":[{"id":"a","goal":"g","allowed_files":["src/math.sh"],"check":"grep -q mul src/math.sh && false"}]}'
 expect 1 "failing slice check fails the gate"     "$G" "$RUN" a; has "VERDICT: FAIL (check)"
+# fan-out: a slice is judged by its own check, not by other slices' red tests
+new_repo; start_run fan-out '{"slices":[{"id":"a","goal":"g","allowed_files":["src/math.sh"],"check":"sh tests/test_add.sh"},{"id":"b","goal":"g","allowed_files":["src/greet.sh"],"check":"sh tests/test_greet.sh"}]}'
+printf '. src/greet.sh\n[ "$(greet bob)" = "hello bob" ] || exit 1\n' > tests/test_greet.sh
+"$SCRIPTS/run.sh" tests-done "$RUN" >/dev/null
+expect 0 "slice a passes on its own check while slice b's test is red" "$G" "$RUN" a; has "slice check"
+expect 1 "slice b's own check fails"               "$G" "$RUN" b; has "FAIL (check)"
+expect 1 "integration runs the full checks"        "$G" "$RUN" integration; has "FAIL (checks)"; has "test_greet.sh"
 # missing checks.sh
 new_repo; start_run default '{"slices":[{"id":"a","goal":"g","allowed_files":["src/math.sh"]}]}'
 echo 'exit 0' > .claude/checks.sh

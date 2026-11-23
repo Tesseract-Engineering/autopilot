@@ -13,10 +13,12 @@ expect 1 "protected paths not allowed"             "$P" "$RUN"; has "protected"
 echo '{"slices":[{"id":"integration","goal":"g","allowed_files":["src/x"]}]}' > .autopilot/runs/$RUN/slices.json
 expect 1 "reserved id"                             "$P" "$RUN"; has reserved
 "$SCRIPTS/run.sh" end "$RUN" aborted >/dev/null
-start_run fan-out '{"slices":[{"id":"a","goal":"g","allowed_files":["src/math.sh"]},{"id":"b","goal":"g","allowed_files":["src/greet.sh"]}]}'
+start_run fan-out '{"slices":[{"id":"a","goal":"g","allowed_files":["src/math.sh"],"check":"true"},{"id":"b","goal":"g","allowed_files":["src/greet.sh"],"check":"true"}]}'
 expect 0 "disjoint fan-out ok"                     "$P" "$RUN"
-echo '{"slices":[{"id":"a","goal":"g","allowed_files":["src/math.sh"]},{"id":"b","goal":"g","allowed_files":["./src/math.sh","src/greet.sh"]}]}' > .autopilot/runs/$RUN/slices.json
+echo '{"slices":[{"id":"a","goal":"g","allowed_files":["src/math.sh"],"check":"true"},{"id":"b","goal":"g","allowed_files":["./src/math.sh","src/greet.sh"],"check":"true"}]}' > .autopilot/runs/$RUN/slices.json
 expect 1 "overlapping fan-out rejected"            "$P" "$RUN"; has "not file-disjoint"; has "src/math.sh"
-echo '{"slices":[{"id":"a","goal":"g","allowed_files":["src/*.sh"]},{"id":"b","goal":"g","allowed_files":["src/greet.sh"]}]}' > .autopilot/runs/$RUN/slices.json
+echo '{"slices":[{"id":"a","goal":"g","allowed_files":["src/*.sh"],"check":"true"},{"id":"b","goal":"g","allowed_files":["src/greet.sh"],"check":"true"}]}' > .autopilot/runs/$RUN/slices.json
 expect 1 "globs rejected in fan-out"               "$P" "$RUN"; has "literal file paths"
+echo '{"slices":[{"id":"a","goal":"g","allowed_files":["src/math.sh"]},{"id":"b","goal":"g","allowed_files":["src/greet.sh"],"check":"true"}]}' > .autopilot/runs/$RUN/slices.json
+expect 1 "multi-slice plan needs a check per slice" "$P" "$RUN"; has "slice a: needs a check"
 finish

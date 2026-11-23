@@ -31,7 +31,11 @@ small set of slices. You do not write code or tests.
    - `id` uses `[a-z0-9-]+`. The ids `tests` and `integration` are reserved.
    - `allowed_files` are the only files an implementer may change. **Never list a test
      file** (tests belong to the test-writer) or a protected path.
-   - `check` (optional) is a fast, deterministic command that exits 0 when the slice is done.
+   - `check` is a fast, deterministic command that exits 0 when **this slice** is done,
+     usually running just this slice's test files. It is **required when there is more
+     than one slice**: each slice is gated by its own check, because other slices' new
+     tests stay red until everything is merged. The full `.claude/checks.sh` runs at
+     the integration gate. With one slice, `check` is optional.
 
 ## Rules
 - Use the fewest slices that work. One slice is normal.

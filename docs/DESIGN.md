@@ -72,7 +72,7 @@ In order, stopping at the first failure:
 1. `attempts.sh check`: if the slice is already at max, exit 0 with `ESCALATED`. That lets the agent stop, and the orchestrator escalates.
 2. `scope-check.sh`: `git diff --name-only <slice_base>` plus untracked files, minus `.autopilot/`, must be ⊆ the slice's `allowed_files` globs. Files under `protected_paths` always fail.
 3. `tests-unchanged.sh`: the sha256 of every file matching `test_globs` must match the manifest snapshotted right after the test-writer commit. Added and deleted test files count as changes.
-4. `.claude/checks.sh`: the repo's own checks, which must exit 0.
+4. Checks. A slice that has a `check` runs only that check. The other slices' new tests are still red until merge, which was **found in dogfooding**: see DOGFOOD.md. The `integration` unit, and a slice without a `check`, run `.claude/checks.sh`. `plan-check` requires a `check` on every slice when a plan has more than one.
 
 On failure it runs `attempts.sh incr`, writes `gate-<n>.log` to the run dir, and prints to stderr (≤ ~50 lines):
 ```
