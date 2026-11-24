@@ -1,0 +1,27 @@
+{
+  "description": "autopilot gates. Verdicts are exit codes from scripts; no prompt/agent hooks. Inactive unless an autopilot run is active in the repo.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit|NotebookEdit",
+        "hooks": [
+          { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}\"/scripts/claude/pretooluse.sh", "timeout": 30 }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}\"/scripts/claude/subagent-stop.sh", "timeout": 600 }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}\"/scripts/claude/stop.sh", "timeout": 600 }
+        ]
+      }
+    ]
+  }
+}

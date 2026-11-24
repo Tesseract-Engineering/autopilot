@@ -1,0 +1,4 @@
+__pycache__/
+.pytest_cache/
+.autopilot/runs/
+.autopilot/worktrees/

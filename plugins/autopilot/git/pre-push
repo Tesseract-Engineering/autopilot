@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# autopilot pre-push backstop: same verdict as CI. Installed by `autopilot install-git`.
+exec "$(git rev-parse --show-toplevel)/.autopilot/repo-gate.sh"

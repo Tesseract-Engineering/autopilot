@@ -1,0 +1,12 @@
+{
+  "name": "autopilot",
+  "description": "Tesseract Engineering: run coding agents against deterministic gates.",
+  "owner": { "name": "Tesseract Engineering" },
+  "plugins": [
+    {
+      "name": "autopilot",
+      "source": "./plugins/autopilot",
+      "description": "Planner, test-writer, implementer and read-only reviewer agents, gated by scripts (exit codes), never by a model."
+    }
+  ]
+}
