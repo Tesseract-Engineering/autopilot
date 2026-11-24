@@ -1,5 +1,5 @@
 . "$(dirname "$0")/lib.sh"
-AP="$(cd "$(dirname "$0")/../bin" && pwd)/autopilot"
+AP="$(cd "$(dirname "$0")/../plugins/autopilot/bin" && pwd)/autopilot"
 new_repo
 expect 0 "install-git"                            "$AP" install-git --ci; has "installed pre-push hook"; has "autopilot-gate.yml"
 expect 0 "pre-push hook installed"                test -x .git/hooks/pre-push

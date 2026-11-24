@@ -1,23 +1,23 @@
 # autopilot: design
 
-Status: **draft for review**. Nothing below is built yet.
+Status: **built (v1)**. Claude Code only. See DOGFOOD.md for the live runs.
 Docs read on 2026-11-23 against Claude Code 2.1.331: plugins-reference, plugin-marketplaces, hooks, sub-agents, worktrees, best-practices, and the two Anthropic engineering posts. Codex docs (hooks, plugins, subagents) were read for the portability notes.
 
 ## 1. Core idea
 
-Programs decide pass/fail and models do the work. Every verdict is an exit code from a bash script in `core/scripts/`. Hooks only call those scripts and translate the exit code into the harness's block format. No `prompt` or `agent` hook is used anywhere.
+Programs decide pass/fail and models do the work. Every verdict is an exit code from a bash script in `plugins/autopilot/scripts/`. Hooks only call those scripts and translate the exit code into the harness's block format. No `prompt` or `agent` hook is used anywhere.
 
 ## 2. Where the docs differ from the brief
 
 | # | Brief says | Docs say (2.1.331) | Decision |
 |---|---|---|---|
 | D1 | `commands/` for `/autopilot:run` and `/autopilot:init` | "Commands are the older format… Prefer `skills/` for new plugins." Skills are namespaced `/<plugin>:<dir>`. | Use `skills/run/` and `skills/init/` (both `disable-model-invocation: true`) and `skills/autopilot/` for the router. Engineers type `/autopilot:run "<task>"` and `/autopilot:init`. No `commands/` directory. |
-| D2 | `isolation: worktree` branches from the default branch | Confirmed, unless the `worktree.baseRef: "head"` setting is set. That setting is per user or per project and can't be scoped to a single subagent. | **We create worktrees ourselves** (`core/scripts/worktree.sh`) with `git worktree add` from the run branch's HEAD, after the plan and the tests are committed there. No agent uses `isolation: worktree`. See §6. |
+| D2 | `isolation: worktree` branches from the default branch | Confirmed, unless the `worktree.baseRef: "head"` setting is set. That setting is per user or per project and can't be scoped to a single subagent. | **We create worktrees ourselves** (`scripts/worktree.sh`) with `git worktree add` from the run branch's HEAD, after the plan and the tests are committed there. No agent uses `isolation: worktree`. See §6. |
 | D3 | Stop hook has a consecutive-block cap | The cap is **8** consecutive continuations (`CLAUDE_CODE_STOP_HOOK_BLOCK_CAP`). The counter **resets whenever Claude calls a tool**, so an agent that keeps editing never reaches it. | The cap can't be relied on to stop a loop. `attempts.sh` (cap 3, below 8) is the real stop. When attempts run out, the gate **allows** the stop and marks the slice `escalated`, so the loop ends cleanly rather than being cut off by the harness. |
-| D4 | "SubagentStop if the input lets us tell agents apart" | It does. `SubagentStop` and `PreToolUse` inside a subagent carry `agent_id`, `agent_type` and `agent_transcript_path`. Plugin agents are named `autopilot:<name>`. | Gate per role: the implementer gets the full gate, the test-writer gets the red check, the planner and reviewer are not gated. **Verified live:** `agent_type` is `"autopilot:implementer"` and so on, and the slice marker is read from the real `agent_transcript_path` (docs/evidence/phase4-*). |
+| D4 | "SubagentStop if the input lets us tell agents apart" | It does. `SubagentStop` and `PreToolUse` inside a subagent carry `agent_id`, `agent_type` and `agent_transcript_path`. Plugin agents are named `autopilot:<name>`. | Gate per role: the implementer gets the full gate, the test-writer gets the red check, the planner and reviewer are not gated. **Verified live:** `agent_type` is `"autopilot:implementer"` and so on, and the slice marker is read from the real `agent_transcript_path` (DOGFOOD.md, phase 4). |
 | D5 | Plugin agents ignore `hooks`, `mcpServers`, `permissionMode` | Confirmed. `initialPrompt` is ignored too. | All enforcement goes in `hooks/hooks.json`. Tool limits use `tools` / `disallowedTools`. |
 | D6 | Worktrees lack gitignored files and deps | Confirmed. `.worktreeinclude` (gitignore syntax, copies only files that are ignored) is applied only to worktrees that Claude creates. | Because we create worktrees ourselves (D2), `worktree.sh` applies `.worktreeinclude` itself, then runs the optional `.autopilot/setup.sh` (for example `pip install -e .`). |
-| D7 | Plugin = `plugins/autopilot/` generated from `core/` | An installed plugin is copied into a cache. Only the plugin directory ships, so `../../core` isn't reachable at runtime. Hook paths use `${CLAUDE_PLUGIN_ROOT}`. | `build.sh` **copies** `core/scripts`, `core/skills` and `core/roles` into `plugins/autopilot/`. `build.sh --check` fails if the generated files drift from `core/`, and CI runs it. |
+| D7 | Plugin = `plugins/autopilot/` generated from `core/` | An installed plugin is copied into a cache. Only the plugin directory ships, so nothing outside it is reachable at runtime. Hook paths use `${CLAUDE_PLUGIN_ROOT}`. | Claude Code only for v1, so `plugins/autopilot/` **is** the source: scripts, skills, agents and hooks all live there. No generator. Tests live outside it in `tests/` so they don't ship. |
 | D8 | — | Exit codes: `0` is pass, `2` blocks with stderr fed back to Claude, any other code is **non-blocking**. A hook that times out does not block. | The shims map every non-zero core verdict to exit 2. A crash inside the gate script also blocks (fail closed): the shim catches it and exits 2 with the message "gate crashed: …". Hook timeout is set explicitly (600s, the documented default). |
 
 ## 3. The graph
@@ -42,7 +42,7 @@ Router rules, deterministic where possible and decided by the orchestrator other
 
 The skill says in so many words when **not** to use the graph: exploratory or design questions, changes with no deterministic check, tasks where the human wants to pair, and anything the 15× token cost can't justify.
 
-## 4. Roles (`core/roles/*.md` → `plugins/autopilot/agents/*.md`)
+## 4. Roles (`plugins/autopilot/agents/*.md`)
 
 | Role | Sees | Tools (frontmatter) | Writes | Gated by |
 |---|---|---|---|---|
@@ -134,33 +134,28 @@ Run dir `.autopilot/runs/<id>/`: `state.json` (pattern, phase, branch), `plan.md
 
 ```
 .claude-plugin/marketplace.json          # name: autopilot, plugins: [{name: autopilot, source: ./plugins/autopilot}]
-core/
-  scripts/*.sh                           # harness-neutral; args + exit codes; need bash, git, jq
-  skills/autopilot/SKILL.md              # router + patterns, role-based wording (no Claude tool names)
-  skills/{run,init}/SKILL.md
-  roles/{planner,test-writer,implementer,reviewer}.md   # prompt + YAML metadata (allowed capabilities)
-  tests/*.sh                             # plain-bash test runner (bats not installed; no extra dep)
-adapters/
-  claude/agent-frontmatter/*.yml         # role → Claude frontmatter (tools, disallowedTools, model)
-  claude/hooks.json
-  claude/shims/{pretooluse,subagent-stop,stop}.sh   # parse hook JSON → call core → exit 2 + stderr
-  git/pre-push, git/autopilot-gate.yml   # backstop: checks.sh + protected paths vs merge-base
-  codex/README.md                        # what's needed + blockers (below)
-plugins/autopilot/                       # GENERATED by build.sh. Never hand-edit.
+plugins/autopilot/                       # the plugin; the only directory that is installed
   .claude-plugin/plugin.json
-  agents/*.md  skills/*/SKILL.md  hooks/hooks.json  scripts/
+  agents/{planner,test-writer,implementer,reviewer}.md
+  skills/autopilot/SKILL.md              # router + patterns
+  skills/{run,init}/SKILL.md
+  hooks/hooks.json
+  scripts/*.sh, scripts/lib/             # args + exit codes; need bash, git, jq, python3
+  scripts/claude/{pretooluse,subagent-stop,stop}.sh   # parse hook JSON → call scripts → exit 2 + stderr
+  bin/autopilot                          # CLI over the scripts
+  git/pre-push, git/autopilot-gate.yml   # backstop: checks.sh + protected paths vs merge-base
+tests/*.sh                               # plain-bash test runner (no bats dependency)
 examples/demo-repo/                      # tiny Python package (pytest) + tasks/{01-default.md,02-fanout.md}
-build.sh                                 # generate; --check for drift
 docs/DESIGN.md docs/DOGFOOD.md README.md
 ```
 
-## 9. Codex adapter (v1: README only)
-Notes from the Codex docs:
-- Codex has `Stop` and `SubagentStop`. `decision:"block"` or exit 2 **continues** the turn with the reason. That is the same semantics we rely on, so it is fine.
-- Plugins can bundle hooks (`.codex-plugin/plugin.json` → `hooks/hooks.json`).
-- **Blocker:** non-managed hooks have to be trusted by each user through `/hooks`, and re-trusted after every change. The gate is therefore not active by default after install.
-- **Blocker:** Codex agent TOML has no per-agent tool allow-list, and agents inherit the parent's sandbox. A read-only reviewer can't be enforced per agent, so it would need a separate read-only-sandbox invocation.
-- Whether `SubagentStop` input identifies the agent type was not confirmed and needs checking.
+## 9. Other harnesses (not planned for v1)
+v1 targets Claude Code only. The scripts take arguments and return exit codes, and
+the hook shims in `scripts/claude/` are the only Claude-specific glue, so another
+harness would need its own shims and agent definitions. Codex was looked at and has
+open blockers (hooks need per-user trust, no per-agent tool allow-list, agent identity
+in hook input unconfirmed). Until then, `autopilot install-git --ci` gives any
+workflow the same checks at push and in CI.
 
 ## 10. Proof plan (definition of done)
 | Claim | Demonstration |
@@ -171,7 +166,7 @@ Notes from the Codex docs:
 | (d) 3 failures escalate | Core test plus a live run with an impossible slice: attempt 3 → `ESCALATE`, agent stops, run state `escalated`. |
 | (e) unproven finding discarded | Core test plus live: a finding whose repro passes is logged as discarded. A finding whose repro fails is kept. |
 
-Plus `claude plugin validate .` (and `--strict`), `core/tests/run.sh`, and `build.sh --check`, with their real output pasted into the PR.
+Plus `claude plugin validate .` (and `--strict`) and `tests/run.sh`, with their real output pasted into the PR.
 
 ## 11. Decisions (answered 2026-11-23)
 1. **JSON tooling:** use `jq` for quick reads and filters (config, state, slices), and `python3` (stdlib only) for logic with state or error handling: glob matching with `**`, parsing hook input and transcripts. Requirements: bash, git, jq, python3.

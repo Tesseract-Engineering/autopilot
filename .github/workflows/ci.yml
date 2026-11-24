@@ -10,7 +10,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: generated plugin is up to date
-        run: ./build.sh --check
       - name: script tests
-        run: core/tests/run.sh
+        run: tests/run.sh

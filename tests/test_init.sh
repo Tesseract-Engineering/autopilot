@@ -1,5 +1,5 @@
 . "$(dirname "$0")/lib.sh"
-AP="$(cd "$(dirname "$0")/../bin" && pwd)/autopilot"
+AP="$(cd "$(dirname "$0")/../plugins/autopilot/bin" && pwd)/autopilot"
 D="$(mktemp -d "$TMP_ROOT/init.XXXXXX")"; cd "$D"
 expect 64 "init outside git fails"               "$AP" init
 git init -q -b main . && git config user.email t@e && git config user.name t

@@ -1,6 +1,6 @@
 # Claude adapter shims, fed synthetic hook input (fields per the hooks reference).
 . "$(dirname "$0")/lib.sh"
-SHIMS="$(cd "$(dirname "$0")/../../adapters/claude/shims" && pwd)"
+SHIMS="$(cd "$(dirname "$0")/../plugins/autopilot/scripts/claude" && pwd)"
 export AP_CORE="$SCRIPTS"
 hook() { # hook SHIM JSON
   local shim="$1" json="$2"

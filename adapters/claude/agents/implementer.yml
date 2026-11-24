@@ -1,6 +1,0 @@
-name: implementer
-description: autopilot implementer. Implements one slice within its allowed files until the deterministic gate passes. Use only from an autopilot run.
-tools: Read, Grep, Glob, Write, Edit, Bash
-model: inherit
-maxTurns: 80
-color: green

@@ -6,7 +6,7 @@
 #   new_repo                                fresh fixture repo; cd into it
 # Fixture: a shell "project" whose tests are tests/test_*.sh, run by .claude/checks.sh.
 
-SCRIPTS="$(cd "$(dirname "${BASH_SOURCE[0]}")/../scripts" && pwd)"
+SCRIPTS="$(cd "$(dirname "${BASH_SOURCE[0]}")/../plugins/autopilot/scripts" && pwd)"
 PASS=0; FAILS=0; OUT=""; LAST=""
 
 expect() {

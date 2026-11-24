@@ -5,8 +5,7 @@
 #   .github/workflows/autopilot-gate.yml  with --ci (commit it)
 set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
-git_adapter="$here/../git"          # plugin layout: scripts/../git
-[ -d "$git_adapter" ] || git_adapter="$here/../../adapters/git"   # source layout
+git_adapter="$here/../git"
 root="$(git rev-parse --show-toplevel)"
 mkdir -p "$root/.autopilot"
 cp "$here/repo-gate.sh" "$root/.autopilot/repo-gate.sh"; chmod +x "$root/.autopilot/repo-gate.sh"
