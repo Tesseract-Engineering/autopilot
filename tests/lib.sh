@@ -8,6 +8,7 @@
 
 SCRIPTS="$(cd "$(dirname "${BASH_SOURCE[0]}")/../plugins/autopilot/scripts" && pwd)"
 PASS=0; FAILS=0; OUT=""; LAST=""
+unset GITHUB_HEAD_REF   # CI sets this to the PR branch; repo-gate reads it as the branch name
 
 expect() {
   local want="$1" desc="$2"; shift 2
