@@ -1,6 +1,6 @@
 {
   "name": "autopilot",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Run coding agents without babysitting them: deterministic gates, independent reviewers, one human approval.",
   "author": { "name": "Tesseract Engineering" },
   "repository": "https://github.com/Tesseract-Engineering/autopilot",

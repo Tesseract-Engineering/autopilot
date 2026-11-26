@@ -4,6 +4,7 @@
 
 AP_LIB="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 AP_SCRIPTS="$(dirname "$AP_LIB")"
+. "$AP_LIB/platform.sh"
 
 ap_die() { echo "autopilot: $*" >&2; exit 64; }
 

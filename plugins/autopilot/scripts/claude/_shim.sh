@@ -5,6 +5,7 @@
 #   core 3 -> exit 0 + systemMessage (escalated: let it stop, tell the human)
 #   anything else -> exit 2 "gate crashed" (fail closed)
 AP_CORE="${AP_CORE:-$(cd "$(dirname "$0")/.." && pwd)}"   # plugin: scripts/claude/.. = scripts/
+. "$AP_CORE/lib/platform.sh"
 HOOK_INPUT="$(cat)"
 # Opt-in debugging: AUTOPILOT_HOOK_LOG=/path/file records every hook input.
 [ -n "${AUTOPILOT_HOOK_LOG:-}" ] && printf '%s\n' "$HOOK_INPUT" >> "$AUTOPILOT_HOOK_LOG"
