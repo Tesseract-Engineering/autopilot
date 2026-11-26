@@ -19,4 +19,16 @@ expect 0 "end"                                   "$R" end "$RUN" done
 expect 1 "no current after end"                  "$R" current
 rm -f .claude/checks.sh; git commit -qam "rm checks"
 expect 64 "start requires checks.sh"             "$R" start default "t"; has "/autopilot:init"
+# The repo may itself be a linked worktree of a clone whose main checkout is on another
+# branch without autopilot. The run belongs to the worktree it was started in.
+new_repo; MAIN="$REPO"; W="$TMP_ROOT/linked-wt"
+git worktree add -q -b feature "$W"
+git rm -q .autopilot/config.json && git commit -qm "main checkout: no autopilot"
+cd "$W"
+expect 0 "start in a linked worktree"            "$R" start small "t"; RUN="$OUT"
+expect 0 "worktree is on the run branch"         test "$(git rev-parse --abbrev-ref HEAD)" = "autopilot/$RUN"
+expect 0 "main checkout left on main"            test "$(git -C "$MAIN" rev-parse --abbrev-ref HEAD)" = main
+expect 0 "run dir is in the worktree"            test -f "$W/.autopilot/runs/$RUN/state.json"
+expect 1 "nothing written to the main checkout"  test -e "$MAIN/.autopilot/runs"
+expect 0 "end in the worktree"                   "$R" end "$RUN" aborted
 finish

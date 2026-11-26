@@ -7,6 +7,7 @@
 # Fixture: a shell "project" whose tests are tests/test_*.sh, run by .claude/checks.sh.
 
 SCRIPTS="$(cd "$(dirname "${BASH_SOURCE[0]}")/../plugins/autopilot/scripts" && pwd)"
+. "$SCRIPTS/lib/platform.sh"   # LF-only jq/python output on Windows
 PASS=0; FAILS=0; OUT=""; LAST=""
 unset GITHUB_HEAD_REF   # CI sets this to the PR branch; repo-gate reads it as the branch name
 
@@ -27,6 +28,9 @@ lacks() {
 }
 
 TMP_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/autopilot-test.XXXXXX")"
+# Git must never find a repository above the fixtures. On a machine whose temp dir sits
+# inside another repo (a home folder under git), "init outside git" would scaffold there.
+export GIT_CEILING_DIRECTORIES="$TMP_ROOT"
 cleanup() { [ -n "${TMP_ROOT:-}" ] && rm -rf "${TMP_ROOT:?}"; }
 trap cleanup EXIT
 

@@ -17,6 +17,33 @@ final diff, and that's the only step you're needed for.
 
 Requires `bash`, `git`, `jq` and `python3` (stdlib only).
 
+Without the `/plugin` command (for example in the desktop app), add the same two entries to
+`~/.claude/settings.json`:
+
+```json
+{
+  "extraKnownMarketplaces": {
+    "autopilot": { "source": { "source": "github", "repo": "Tesseract-Engineering/autopilot" } }
+  },
+  "enabledPlugins": { "autopilot@autopilot": true }
+}
+```
+
+To try a local checkout instead, use `"source": { "source": "directory", "path": "<abs path to this repo>" }`.
+
+### Windows
+
+autopilot runs under Git for Windows' bash, which Claude Code uses for hooks.
+
+- `winget install jqlang.jq`, then open a new terminal so `jq` is on `PATH`.
+- `python3` must run a real Python, not the Microsoft Store stub: `python3 --version`.
+- Line endings are pinned by `.gitattributes`, so the scripts stay LF even with
+  `core.autocrlf=true`. The scripts also strip the CRLF that native `jq.exe` and `python.exe`
+  write to pipes (`scripts/lib/platform.sh`).
+- A repo's `.claude/checks.sh` made on Windows is committed without the executable bit
+  (`core.filemode=false`). Run `git update-index --chmod=+x .claude/checks.sh` before
+  committing it, or teammates on macOS and Linux get "no executable .claude/checks.sh".
+
 ## Use
 
 ```
@@ -121,3 +148,5 @@ tests/run.sh                # script tests
 claude plugin validate .    # marketplace + plugin manifests
 claude --plugin-dir ./plugins/autopilot   # try it locally
 ```
+
+For sandbox repos (generated companies, emulators), see [docs/SANDBOX.md](docs/SANDBOX.md).

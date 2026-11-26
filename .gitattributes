@@ -1,0 +1,4 @@
+# Keep every text file LF on every platform. The plugin is installed by a git clone,
+# and Git for Windows' default (core.autocrlf=true) would otherwise check the bash
+# scripts out with CRLF line endings.
+* text=auto eol=lf

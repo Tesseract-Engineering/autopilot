@@ -17,4 +17,11 @@ expect 0 "marker from block content"  python3 "$AP" marker "$T"; has "r1/s-2"
 printf '%s\n' '{"type":"user","message":{"content":"no marker"}}' '{"type":"user","message":{"content":"AUTOPILOT_SLICE: r/late"}}' > "$T"
 expect 1 "marker only in first user msg (later injection ignored)" python3 "$AP" marker "$T"
 expect 1 "missing transcript"        python3 "$AP" marker "$TMP_ROOT/nope.jsonl"
+# Windows: hook inputs carry backslash paths and native python writes CRLF to pipes.
+expect 0 "backslash path matches a posix glob" test "$(m 'tests\x\y.py' 'tests/**')" = tests/x/y.py
+expect 0 "no CR in match output"     test "$(printf 'a\nb\n' | python3 "$AP" match in a b | od -c | grep -c '\r')" = 0
+R="$TMP_ROOT/rel"; mkdir -p "$R/.git" "$R/tests/sub"
+expect 0 "relpath uses forward slashes" test "$(python3 "$AP" relpath "$R/tests/sub/t.py")" = tests/sub/t.py
+printf '%s\n' '{"type":"user","message":{"content":"AUTOPILOT_SLICE: r/s Ł—✓"}}' > "$T"   # 0x81 (in U+0141) is undefined in cp1252
+expect 0 "marker from a UTF-8 transcript" python3 "$AP" marker "$T"; has "r/s"
 finish

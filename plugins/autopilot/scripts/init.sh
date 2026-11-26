@@ -59,7 +59,8 @@ if [ -e .autopilot/config.json ]; then
 else
   jq -n --argjson g "$globs" --arg t "$test_cmd" --arg r "$repro" --argjson c "$codes" '{
     test_globs: $g,
-    protected_paths: ["migrations/**", "**/migrations/**", ".github/workflows/**"],
+    protected_paths: ["migrations/**", "**/migrations/**", ".github/workflows/**",
+                      "**/.env", "**/.env.*", "**/secrets/**"],
     max_attempts: 3,
     require_plan_approval: true,
     test_cmd: $t,
@@ -96,9 +97,9 @@ if [ ! -e AGENTS.md ]; then
 elif grep -q '<!-- autopilot:begin' AGENTS.md; then
   python3 - "$block" <<'PY'
 import re, sys
-p = "AGENTS.md"; s = open(p).read()
+p = "AGENTS.md"; s = open(p, encoding="utf-8").read()
 s = re.sub(r"<!-- autopilot:begin.*?<!-- autopilot:end -->", lambda m: sys.argv[1], s, count=1, flags=re.S)
-open(p, "w").write(s)
+open(p, "w", encoding="utf-8", newline="\n").write(s)
 PY
   note "updated  AGENTS.md autopilot block"
 else

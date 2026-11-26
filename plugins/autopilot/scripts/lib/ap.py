@@ -45,7 +45,7 @@ def cmd_match(mode, patterns):
     # each argument may hold several newline-separated patterns
     rxs = [glob_rx(p) for a in patterns for p in a.splitlines() if p.strip()]
     for line in sys.stdin:
-        path = line.rstrip("\n")
+        path = line.rstrip("\r\n").replace("\\", "/")  # Windows paths compare as posix
         if not path:
             continue
         hit = any(r.match(path) for r in rxs)
@@ -69,7 +69,7 @@ def text_of(content):
 
 def cmd_marker(path):
     try:
-        with open(path) as f:
+        with open(path, encoding="utf-8", errors="replace") as f:
             for line in f:
                 try:
                     entry = json.loads(line)
@@ -92,7 +92,7 @@ def cmd_relpath(path):
     d = os.path.dirname(path)
     while True:
         if os.path.exists(os.path.join(d, ".git")):
-            print(os.path.relpath(path, d))
+            print(os.path.relpath(path, d).replace(os.sep, "/"))
             return 0
         parent = os.path.dirname(d)
         if parent == d:
@@ -102,6 +102,7 @@ def cmd_relpath(path):
 
 
 def main(argv):
+    sys.stdout.reconfigure(newline="\n")  # Windows would write CRLF into bash pipes
     if len(argv) >= 2 and argv[0] == "match" and argv[1] in ("in", "out"):
         return cmd_match(argv[1], argv[2:])
     if len(argv) == 2 and argv[0] == "marker":

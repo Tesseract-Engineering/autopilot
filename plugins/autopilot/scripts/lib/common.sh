@@ -4,6 +4,7 @@
 
 AP_LIB="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 AP_SCRIPTS="$(dirname "$AP_LIB")"
+. "$AP_LIB/platform.sh"
 
 ap_die() { echo "autopilot: $*" >&2; exit 64; }
 
@@ -11,13 +12,9 @@ for _t in git jq python3; do
   command -v "$_t" >/dev/null 2>&1 || ap_die "missing required tool: $_t"
 done
 
-# The main checkout, even when called from inside a linked worktree.
-# (.autopilot/runs is gitignored, so it only exists in the main checkout.)
-ap_main_root() {
-  local common
-  common="$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)" || ap_die "not inside a git repository"
-  dirname "$common"
-}
+# The checkout that owns the run, even when called from inside a slice worktree
+# (.autopilot/runs is gitignored, so it only exists there). See ap_checkout_root.
+ap_main_root() { ap_checkout_root || ap_die "not inside a git repository"; }
 
 AP_MAIN="${AP_MAIN:-$(ap_main_root)}"
 AP_CONFIG="$AP_MAIN/.autopilot/config.json"

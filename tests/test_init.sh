@@ -10,6 +10,9 @@ expect 0 "init on a python repo"                 "$AP" init; has "(python)"; has
 expect 0 "checks.sh is executable"               test -x .claude/checks.sh
 expect 0 "checks.sh runs pytest"                 grep -q "pytest" .claude/checks.sh
 expect 0 "config is valid JSON w/ python globs"  jq -e '.test_globs | index("**/test_*.py")' .autopilot/config.json
+expect 0 "secrets are protected by default"     jq -e '.protected_paths | index("**/.env") and index("**/secrets/**")' .autopilot/config.json
+expect 0 "a nested .env matches the default"   test "$(printf 'sandbox/.env.seed
+' | python3 "$SCRIPTS/lib/ap.py" match in "$(jq -r '.protected_paths[]' .autopilot/config.json)")" = sandbox/.env.seed
 expect 0 "config defaults"                       jq -e '.max_attempts==3 and .require_plan_approval==true and .repro_fail_codes==[1]' .autopilot/config.json
 expect 0 "gitignore has run dirs"                grep -qxF ".autopilot/runs/" .gitignore
 expect 0 "existing AGENTS.md content kept"       grep -q "be nice" AGENTS.md

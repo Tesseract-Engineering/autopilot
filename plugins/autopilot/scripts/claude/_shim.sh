@@ -5,6 +5,7 @@
 #   core 3 -> exit 0 + systemMessage (escalated: let it stop, tell the human)
 #   anything else -> exit 2 "gate crashed" (fail closed)
 AP_CORE="${AP_CORE:-$(cd "$(dirname "$0")/.." && pwd)}"   # plugin: scripts/claude/.. = scripts/
+. "$AP_CORE/lib/platform.sh"
 HOOK_INPUT="$(cat)"
 # Opt-in debugging: AUTOPILOT_HOOK_LOG=/path/file records every hook input.
 [ -n "${AUTOPILOT_HOOK_LOG:-}" ] && printf '%s\n' "$HOOK_INPUT" >> "$AUTOPILOT_HOOK_LOG"
@@ -15,8 +16,7 @@ hin() { printf '%s' "$HOOK_INPUT" | jq -r "$1 // empty" 2>/dev/null; }
 enter_run_or_allow() {
   local cwd; cwd="$(hin .cwd)"
   [ -n "$cwd" ] && cd "$cwd" 2>/dev/null || exit 0
-  git rev-parse --git-dir >/dev/null 2>&1 || exit 0
-  local main; main="$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")"
+  local main; main="$(ap_checkout_root)" || exit 0
   [ -f "$main/.autopilot/config.json" ] || exit 0
   RUN="$("$AP_CORE/run.sh" current 2>/dev/null)" || exit 0
   [ -n "$RUN" ] || exit 0
