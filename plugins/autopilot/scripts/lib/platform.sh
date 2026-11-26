@@ -9,3 +9,15 @@ case "$(uname -s 2>/dev/null)" in
     export PYTHONIOENCODING=utf-8         # transcripts and file names aren't cp1252
     ;;
 esac
+
+# The checkout autopilot works in: the one holding .autopilot/config.json and the run dirs.
+# That is the current work tree, which may itself be a linked worktree of another clone, except
+# inside one of autopilot's own slice worktrees (.autopilot/worktrees/<run>/<slice>), where it is
+# the checkout that made them. (Git's common dir would name the clone's main checkout instead,
+# which can be on another branch, with another config, or none.)
+ap_checkout_root() {
+  local top
+  top="$(git rev-parse --show-toplevel 2>/dev/null)" || return 1
+  case "$top" in */.autopilot/worktrees/*) top="${top%%/.autopilot/worktrees/*}" ;; esac
+  printf '%s\n' "$top"
+}

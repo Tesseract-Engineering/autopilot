@@ -6,61 +6,36 @@ the generator or the emulator fail its checks, unless a human accepts the new ou
 
 ## swarm-sandbox (`sandbox/generator`)
 
-`generate.py` needs no model and is deterministic. The same inputs give the same bytes, so a
-committed hash manifest is a complete regression test for every company.
+Set up on branch `ishan-sandbox-env` of swarm-beta (2026-11-26). `generate.py` needs no model and is
+deterministic, so the accepted output of every company, as hashes, is a complete regression test.
 
-`.claude/checks.sh`:
+- `sandbox/generator/golden.py check` regenerates `tesseract`, `tesseract-haiku` and `harborline`, then
+  compares 12 files with `golden.sha256`. It exits 1 on any difference. `golden.py write` records new
+  output as accepted, and a human runs it after reading the change. Line endings are ignored:
+  `write_text` gives CRLF on Windows and LF elsewhere, so plain `sha256sum` hashes would differ between
+  teammates.
+- `.claude/checks.sh` runs the generator's tests (when `sandbox/generator/tests/` exists), then
+  `golden.py check`. It is offline and takes about 3 s. It picks a Python that has what it needs:
+  `SANDBOX_PYTHON`, then the repo's `.venv`, then the Tesseract checkout beside it. With arguments, it
+  runs only those pytest files; `repro_cmd` is `.claude/checks.sh {test}`.
+- `.autopilot/config.json` protects:
+  - `golden.sha256`: an agent can't accept its own change.
+  - The model-written `brief.yaml`, `seeds*/`, `storylines*/`, `texts*/` and `chatter*/`: paid model
+    output, and editing it by hand breaks "same inputs, same company".
+  - The Backlot patch.
+  - `.env` files, `secrets/` and `*.pem`.
 
-```bash
-#!/usr/bin/env bash
-# Every company regenerates without a model and matches its accepted output.
-set -euo pipefail
-cd "$(dirname "$0")/../sandbox/generator"
-PY="${SANDBOX_PYTHON:-../../../Tesseract/.venv/Scripts/python.exe}"   # needs pyyaml; bin/python off Windows
-for c in tesseract tesseract-haiku harborline; do "$PY" generate.py "$c" >/dev/null; done
-sha256sum --quiet -c golden.sha256
-```
+The model stages (`design.py`, `plan.py`, `write.py`, `judge.py`) cost money and aren't deterministic,
+so they aren't in `checks.sh`. Use autopilot on the code around them, and run the model stages yourself.
 
-Make the manifest once, after reading the output, and commit it:
+Two things this setup found on its first day:
 
-```bash
-cd sandbox/generator
-sha256sum out/*/corpus_all.jsonl out/*/answer_key.json out/*/roster.yaml out/*/scope.json > golden.sha256
-```
-
-`.autopilot/config.json`, with the parts that matter here:
-
-```json
-{
-  "test_globs": ["sandbox/generator/tests/**"],
-  "protected_paths": [
-    "sandbox/generator/golden.sha256",
-    "sandbox/generator/companies/*/texts/**",
-    "sandbox/generator/companies/*/storylines/**",
-    "sandbox/secrets/**", "**/.env", "**/.env.*", "**/secrets/**"
-  ],
-  "test_cmd": ".claude/checks.sh",
-  "repro_fail_codes": [1]
-}
-```
-
-Why these paths are protected:
-
-- **`golden.sha256`**: an agent that changes the output must not be able to accept its own
-  change. A human regenerates the manifest after reading the diff of `out/`.
-- **`texts/` and `storylines/`**: these were written by a paid model run. Editing them by hand
-  breaks the "everything is a file, same inputs give the same company" rule.
-- **Secrets**: `sandbox/.env.seed`, `sandbox/secrets/` and the generator's `.env` hold real tokens and
-  the API key. Since 0.1.1, `autopilot init` protects `.env` files and `secrets/` folders by default.
-
-The model stages (`design.py`, `plan.py`, `write.py`, `judge.py`) cost money and aren't
-deterministic, so they don't belong in `checks.sh`. Use autopilot on the code around them,
-and run the model stages yourself.
-
-Found while writing this recipe: on 2026-11-26, `generate.py tesseract` and
-`generate.py tesseract-haiku` crashed (`ZeroDivisionError` in `project_channels`). A channel
-with no `members` list was being scored for the Jira bot. Only `harborline` was being run, so
-nothing noticed. This gate would have caught it the day it broke.
+- `generate.py tesseract` and `generate.py tesseract-haiku` crashed (`ZeroDivisionError` in
+  `project_channels`). A channel with no `members` list was being scored for the Jira bot. Only
+  `harborline` was being run, so nothing noticed.
+- swarm-sandbox is a linked worktree of the `swarm-beta` clone. autopilot used to locate a repo
+  through git's common dir, so it read the other checkout's config and would have switched branches
+  there. It now uses the current work tree (`ap_checkout_root`).
 
 ## backlot-fork
 

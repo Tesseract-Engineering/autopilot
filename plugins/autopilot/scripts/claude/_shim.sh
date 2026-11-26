@@ -16,8 +16,7 @@ hin() { printf '%s' "$HOOK_INPUT" | jq -r "$1 // empty" 2>/dev/null; }
 enter_run_or_allow() {
   local cwd; cwd="$(hin .cwd)"
   [ -n "$cwd" ] && cd "$cwd" 2>/dev/null || exit 0
-  git rev-parse --git-dir >/dev/null 2>&1 || exit 0
-  local main; main="$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")"
+  local main; main="$(ap_checkout_root)" || exit 0
   [ -f "$main/.autopilot/config.json" ] || exit 0
   RUN="$("$AP_CORE/run.sh" current 2>/dev/null)" || exit 0
   [ -n "$RUN" ] || exit 0
